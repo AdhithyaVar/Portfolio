@@ -254,6 +254,13 @@ p {
 #experience .experience-details li {
   padding: 0.18rem 0;
 }
+
+.about-card {
+  margin-bottom: 2.2rem;
+}
+.about-card p:last-child {
+  margin-bottom: 0;
+}
 .experience-card {
   padding: 1.6rem 1.85rem;
   border: 1px solid var(--line);
@@ -425,13 +432,16 @@ p {
 /* Contact Section */
 .mail {
   display: inline-block;
-  font: 500 clamp(1.5rem, 4.2vw, 3rem)/1.2 var(--serif);
+  font: 500 clamp(1.15rem, 2.5vw, 2.35rem)/1.2 var(--serif);
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  max-width: 100%;
   text-decoration: underline;
   text-decoration-color: var(--edge);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.16em;
   margin: 0.4rem 0 1.6rem;
-  overflow-wrap: anywhere;
   transition: color 0.2s, text-decoration-color 0.2s;
 }
 .mail:hover, .mail:focus-visible {
@@ -601,6 +611,9 @@ body.cinema-ready .scene-animated {
   }
 }
 @media (max-width: 420px) {
+  .mail {
+    font-size: clamp(0.92rem, 5.2vw, 1.25rem);
+  }
   nav a {
     padding: 0.32rem 0.52rem;
     font-size: 0.76rem;
@@ -669,8 +682,10 @@ body.cinema-ready .scene-animated {
       <div class="section-content">
         <p class="eyebrow">01 / BACKGROUND</p>
         <h2>About Me</h2>
-        <p>I'm a Computer Science and Engineering (Artificial Intelligence) graduate with a focus on building practical AI applications. My work spans retrieval-augmented generation, multi-agent research workflows, and real-time computer vision deployed at the edge.</p>
-        <p>I enjoy turning machine-learning ideas into end-to-end systems—from retrieving relevant knowledge and checking claims to building usable interfaces and optimizing inference speed.</p>
+        <div class="about-card experience-card">
+          <p>I'm a Computer Science and Engineering (Artificial Intelligence) graduate with a focus on building practical AI applications. My work spans retrieval-augmented generation, multi-agent research workflows, and real-time computer vision deployed at the edge.</p>
+          <p>I enjoy turning machine-learning ideas into end-to-end systems—from retrieving relevant knowledge and checking claims to building usable interfaces and optimizing inference speed.</p>
+        </div>
         <div id="experience">
           <p class="eyebrow">02 / PROFESSIONAL EXPERIENCE</p>
           <h2>Experience</h2>

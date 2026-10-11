@@ -1248,20 +1248,19 @@ void main() {
   gl_Position = projectionMatrix * mv;
 
   float keyboardBlend = clamp(uScreenMix, 0.0, 1.0);
-  float referenceSize = 1.05 + aS * 0.85 + w * 1.25 + aE * uW.x * 0.85;
-  float monitorSize = 1.10 + aS * 0.88 + w * 1.25 + aE * uW.x * 0.85 + uW.w * 0.35;
+  float referenceSize = 1.15 + aS * 0.95 + w * 1.5 + aE * uW.x * 1.4;
+  float monitorSize = 1.18 + aS * 0.98 + w * 1.5 + aE * uW.x * 1.4 + uW.w * 0.42;
   gl_PointSize = mix(monitorSize, referenceSize, keyboardBlend) * uPR * (17.55 / -mv.z);
 
-  // Softened, non-glaring opacity curve
-  float referenceOpacity = 0.38 + aS * 0.38 + w * 0.32 + aE * uW.x * 0.36;
-  vA = (referenceOpacity + uW.w * 0.18 * (1.0 - keyboardBlend)) * uAl;
+  float referenceOpacity = 0.45 + aS * 0.45 + w * 0.4 + aE * uW.x * 0.6;
+  vA = (referenceOpacity + uW.w * 0.22 * (1.0 - keyboardBlend)) * uAl;
 }`;
 
   const FSM = `varying float vA;
 void main() {
   float d = length(gl_PointCoord - 0.5);
   if (d > 0.5) discard;
-  gl_FragColor = vec4(vec3(0.88, 0.86, 0.83), smoothstep(0.5, 0.1, d) * vA);
+  gl_FragColor = vec4(vec3(0.93, 0.91, 0.88), smoothstep(0.5, 0.1, d) * vA);
 }`;
 
   const UM = {
@@ -1664,9 +1663,8 @@ void main() {
     const bst = UM.uB.value;
     UM.uB.value = bst * 0.95;
 
-    // Refined, softer model brightness (comfortably dimmer without harsh glare)
-    const baseAlpha = UM.uW.value.x + UM.uW.value.y + UM.uW.value.z + UM.uW.value.w * (1.08 - 0.68 * UM.uScreenMix.value);
-    UM.uAl.value = baseAlpha * 0.76;
+    // Reference brightness: Education monitor at 1.08, Keyboard at 0.40
+    UM.uAl.value = UM.uW.value.x + UM.uW.value.y + UM.uW.value.z + UM.uW.value.w * (1.08 - 0.68 * UM.uScreenMix.value);
 
     // Expose debug info for automated testing verification
     window.__debugInfo = () => ({

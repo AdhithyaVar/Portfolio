@@ -1282,7 +1282,37 @@ window.__modelAssetsReady = (async () => {
       T[0][j + 2] = (T[0][j + 2] - rcz) * robotScale + rcz + robotOffsetZ;
     }
 
-    return { T, sd, em };
+    // Calculate precise bounding metrics dynamically from actual particle coordinates
+    const modelBounds = T.map((arr) => {
+      let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9, minZ = 1e9, maxZ = -1e9;
+      for (let i = 0; i < N; i++) {
+        const x = arr[i * 3], y = arr[i * 3 + 1], z = arr[i * 3 + 2];
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+        if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+      }
+      const cx = (minX + maxX) * 0.5, cy = (minY + maxY) * 0.5, cz = (minZ + maxZ) * 0.5;
+      const halfW = (maxX - minX) * 0.5, halfH = (maxY - minY) * 0.5, halfD = (maxZ - minZ) * 0.5;
+      let maxDistCenterSq = 0, maxDistOriginSq = 0;
+      for (let i = 0; i < N; i++) {
+        const x = arr[i * 3], y = arr[i * 3 + 1], z = arr[i * 3 + 2];
+        const dx = x - cx, dy = y - cy, dz = z - cz;
+        const dSqC = dx * dx + dy * dy + dz * dz;
+        if (dSqC > maxDistCenterSq) maxDistCenterSq = dSqC;
+        const dSqO = x * x + y * y + z * z;
+        if (dSqO > maxDistOriginSq) maxDistOriginSq = dSqO;
+      }
+      return {
+        minX, maxX, minY, maxY, minZ, maxZ,
+        cx, cy, cz,
+        halfW, halfH, halfD,
+        radiusCenter: Math.sqrt(maxDistCenterSq),
+        radiusOrigin: Math.sqrt(maxDistOriginSq),
+        radius: Math.max(Math.sqrt(maxDistCenterSq), Math.sqrt(maxDistOriginSq))
+      };
+    });
+
+    return { T, sd, em, modelBounds };
   })();
 
   // Production Shaders with zero-rotation monitor constraint & keyboard 360°
@@ -1538,8 +1568,21 @@ void main() {
     document.querySelector('#contact .model-slot')
   ];
 
-  // Intrinsic model bounding radii for precision collision and scale fitting
-  const MODEL_RADII = [2.35, 2.75, 2.50, 2.70, 2.86];
+  // Dynamic model bounds calculated directly from Float32Array particle coordinates,
+  // factoring in MP.scale (1.2) for exact screen-space collision boundaries and slot fitting.
+  const MP_SCALE = 1.2;
+  const MODEL_RADII = MT.modelBounds
+    ? MT.modelBounds.map(b => b.radius * MP_SCALE)
+    : [3.69, 3.23, 4.50, 4.79, 4.30];
+  const MODEL_HALF_WIDTHS = MT.modelBounds
+    ? MT.modelBounds.map(b => b.halfW * MP_SCALE)
+    : [2.43, 3.00, 4.12, 4.03, 4.01];
+  const MODEL_HALF_HEIGHTS = MT.modelBounds
+    ? MT.modelBounds.map(b => b.halfH * MP_SCALE)
+    : [2.69, 2.62, 2.21, 2.71, 0.92];
+  const MODEL_CENTERS = MT.modelBounds
+    ? MT.modelBounds.map(b => ({ x: b.cx * MP_SCALE, y: b.cy * MP_SCALE, z: b.cz * MP_SCALE }))
+    : [{ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: -0.29, y: -0.14, z: -0.06 }, { x: 0, y: -0.37, z: 0.66 }];
 
   // Geometry Cache Update (eliminates DOM layout reads during continuous render loop)
   const updateGeometryCache = () => {
@@ -1612,13 +1655,20 @@ void main() {
   window.addEventListener('pointerdown', e => { mv(e); UM.uB.value = 1; }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => { px = 9; py = 9; });
 
-  // Mathematical Collision Guard: Unprojects model bounding sphere to screen space,
+  // Mathematical Collision Guard: Unprojects model bounding dimensions to screen space,
   // verifies zero overlap with active text / card boundaries, and clamps safely to slot
   const checkCollision = (centerWorld, targetScale, stageIdx, activeSecIdx) => {
     const W = cachedInnerWidth || innerWidth;
     const H = cachedInnerHeight || innerHeight;
     const isDesktop = (W >= 1024 && C.aspect >= 1.02);
-    const radius = (MODEL_RADII[stageIdx] || 2.7) * targetScale;
+
+    const curRadius = MODEL_RADII[stageIdx] || 4.0;
+    const curHalfW = MODEL_HALF_WIDTHS[stageIdx] || curRadius;
+    const curHalfH = MODEL_HALF_HEIGHTS[stageIdx] || curRadius;
+
+    const radius = curRadius * targetScale;
+    const halfW = curHalfW * targetScale;
+    const halfH = curHalfH * targetScale;
 
     // Convert world center to screen pixels
     const ndcX = centerWorld.x / (visibleWidth / 2);
@@ -1626,8 +1676,10 @@ void main() {
     let screenX = ((ndcX + 1) / 2) * W;
     let screenY = ((1 - ndcY) / 2) * H;
 
-    // Model bounding radius in screen pixels
+    // Model bounding dimensions in screen pixels
     const radiusPx = (radius / visibleWidth) * W;
+    const halfWPx = (halfW / visibleWidth) * W;
+    const halfHPx = (halfH / visibleHeight) * H;
     const pad = Math.max(16, W * 0.015);
     const headerSafeBottom = 68;
 
@@ -1640,34 +1692,34 @@ void main() {
       const cRect = contentEl.getBoundingClientRect();
       if (isDesktop) {
         // Desktop: Model sits in right slot, content on left
-        const minAllowedX = cRect.right + radiusPx + pad;
+        const minAllowedX = cRect.right + halfWPx + pad;
         if (screenX < minAllowedX) {
           const availableWidth = W - pad - (cRect.right + pad);
-          if (availableWidth >= radiusPx * 2) {
-            screenX = Math.min(W - radiusPx - pad, minAllowedX);
+          if (availableWidth >= halfWPx * 2) {
+            screenX = Math.min(W - halfWPx - pad, minAllowedX);
           } else {
-            const maxRadiusPx = Math.max(60, (W - pad - (cRect.right + pad)) / 2);
-            finalScale = cl((maxRadiusPx / W) * visibleWidth / (MODEL_RADII[stageIdx] || 2.7), 0.38, targetScale);
-            screenX = cRect.right + pad + maxRadiusPx;
+            const maxHalfWPx = Math.max(60, (W - pad - (cRect.right + pad)) / 2);
+            finalScale = cl((maxHalfWPx / W) * visibleWidth / curHalfW, 0.35, targetScale);
+            screenX = cRect.right + pad + maxHalfWPx;
           }
         }
       } else {
         // Mobile: Model in top slot, content below
-        const maxAllowedY = cRect.top - radiusPx - pad;
-        if (screenY > maxAllowedY && maxAllowedY > headerSafeBottom + radiusPx) {
+        const maxAllowedY = cRect.top - halfHPx - pad;
+        if (screenY > maxAllowedY && maxAllowedY > headerSafeBottom + halfHPx) {
           screenY = maxAllowedY;
-        } else if (screenY + radiusPx > cRect.top) {
+        } else if (screenY + halfHPx > cRect.top) {
           const availableHeight = Math.max(120, cRect.top - (headerSafeBottom + pad * 2));
-          const maxRadiusPx = availableHeight / 2;
-          finalScale = cl((maxRadiusPx / H) * visibleHeight / (MODEL_RADII[stageIdx] || 2.7), 0.35, targetScale);
-          screenY = headerSafeBottom + pad + maxRadiusPx;
+          const maxHalfHPx = availableHeight / 2;
+          finalScale = cl((maxHalfHPx / H) * visibleHeight / curHalfH, 0.22, targetScale);
+          screenY = headerSafeBottom + pad + maxHalfHPx;
         }
       }
     }
 
     // Viewport edge containment guards
-    screenX = cl(screenX, radiusPx + pad, W - radiusPx - pad);
-    screenY = cl(screenY, headerSafeBottom + radiusPx + pad, H - radiusPx - pad);
+    screenX = cl(screenX, halfWPx + pad, W - halfWPx - pad);
+    screenY = cl(screenY, headerSafeBottom + halfHPx + pad, H - halfHPx - pad);
 
     // Unproject back to world coordinates
     const resolvedNdcX = (screenX / W) * 2 - 1;
@@ -1823,12 +1875,15 @@ void main() {
     const rawTargetX = ndcX * (visibleWidth / 2);
     const rawTargetY = ndcY * (visibleHeight / 2);
 
-    // Fit model scale to slot dimensions
-    const curModelRadius = lerp(MODEL_RADII[IDX[j0]], MODEL_RADII[IDX[j1]], blendT);
+    // Fit model scale to slot dimensions using exact dynamic model half-widths and half-heights
+    const curHalfW = lerp(MODEL_HALF_WIDTHS[IDX[j0]], MODEL_HALF_WIDTHS[IDX[j1]], blendT);
+    const curHalfH = lerp(MODEL_HALF_HEIGHTS[IDX[j0]], MODEL_HALF_HEIGHTS[IDX[j1]], blendT);
     const slotWorldWidth = (slotW / cachedInnerWidth) * visibleWidth;
     const slotWorldHeight = (slotH / cachedInnerHeight) * visibleHeight;
-    const fitScale = Math.min((slotWorldWidth * 0.84) / (curModelRadius * 2), (slotWorldHeight * 0.84) / (curModelRadius * 2));
-    const rawTargetScale = cl(fitScale, isDesktop ? 0.70 : 0.40, isDesktop ? 1.08 : 0.52);
+    const fitScaleW = (slotWorldWidth * 0.84) / (curHalfW * 2);
+    const fitScaleH = (slotWorldHeight * 0.84) / (curHalfH * 2);
+    const fitScale = Math.min(fitScaleW, fitScaleH);
+    const rawTargetScale = cl(fitScale, isDesktop ? 0.45 : 0.22, isDesktop ? 1.05 : 0.50);
 
     // Mathematical Collision Detection & Screen Boundary Guard
     const collided = checkCollision({ x: rawTargetX, y: rawTargetY }, rawTargetScale, Math.round(Sm), activeSecIdx);
@@ -1866,7 +1921,11 @@ void main() {
       screenMix: UM.uScreenMix.value.toFixed(2),
       pos: { x: G.position.x.toFixed(2), y: G.position.y.toFixed(2) },
       scale: G.scale.x.toFixed(2),
-      alpha: UM.uAl.value.toFixed(2)
+      alpha: UM.uAl.value.toFixed(2),
+      modelBounds: MT.modelBounds,
+      modelRadii: MODEL_RADII,
+      modelHalfWidths: MODEL_HALF_WIDTHS,
+      modelHalfHeights: MODEL_HALF_HEIGHTS
     });
 
     R.render(S, C);

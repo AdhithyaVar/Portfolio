@@ -98,6 +98,7 @@ nav {
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 nav::-webkit-scrollbar {
   display: none;
@@ -598,25 +599,31 @@ body.cinema-ready .scene-animated {
   }
   header {
     justify-content: center;
-    padding-left: 0.8rem;
-    padding-right: 0.8rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   nav {
-    max-width: 100%;
-    padding: 0.28rem 0.35rem;
+    max-width: calc(100vw - 1rem);
+    padding: 0.26rem 0.32rem;
+    -webkit-mask-image: linear-gradient(to right, transparent 0px, black 14px, black calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0px, black 14px, black calc(100% - 14px), transparent 100%);
   }
   nav a {
-    padding: 0.36rem 0.65rem;
-    font-size: 0.8rem;
+    padding: 0.34rem 0.60rem;
+    font-size: 0.78rem;
   }
 }
 @media (max-width: 420px) {
   .mail {
     font-size: clamp(0.92rem, 5.2vw, 1.25rem);
   }
+  nav {
+    gap: 0.12rem;
+    padding: 0.22rem 0.26rem;
+  }
   nav a {
-    padding: 0.32rem 0.52rem;
-    font-size: 0.76rem;
+    padding: 0.30rem 0.46rem;
+    font-size: 0.73rem;
   }
   h1 {
     font-size: clamp(2.4rem, 11vw, 3.4rem);
@@ -627,6 +634,12 @@ body.cinema-ready .scene-animated {
   }
   .hero-actions {
     flex-direction: column;
+  }
+}
+@media (max-width: 350px) {
+  nav a {
+    padding: 0.26rem 0.36rem;
+    font-size: 0.68rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -866,6 +879,27 @@ window.__modelAssetsReady = (async () => {
     });
   });
 
+  // Helper for absolute element document top (fixes nested offsetTop calculations)
+  const getPageTop = el => {
+    let top = 0, curr = el;
+    while (curr) {
+      top += curr.offsetTop;
+      curr = curr.offsetParent;
+    }
+    return top;
+  };
+
+  // Frame-rate independent exponential damping helper: 1 - exp(-lambda * dt)
+  const damp = (lambda, delta) => 1.0 - Math.exp(-lambda * Math.min(delta, 0.1));
+
+  // Geometry cache for zero-overhead animation loops
+  let sectionBounds = [];
+  let sectionCenters = [];
+  let slotGeometry = [];
+  let cachedInnerWidth = window.innerWidth;
+  let cachedInnerHeight = window.innerHeight;
+  let maxScroll = 1;
+
   // Reversible Scroll-Driven Content Reveal
   const sceneSections = ['top', 'about', 'work', 'skills', 'education', 'contact'].map(id => document.getElementById(id));
   const sceneItems = sceneSections.map(section => Array.from(section.querySelectorAll('h1, h2, p, .eyebrow, .hero-actions, .card, .skills, .background-block, .mail, .contact-phone, .links'))
@@ -878,15 +912,16 @@ window.__modelAssetsReady = (async () => {
   const cinemaEase = v => { v = cinemaClamp(v); return v * v * (3 - 2 * v); };
   let cinemaY = scrollY, cinemaMotion = 0, cinemaDrift = 0;
 
-  const updateSceneText = () => {
+  const updateSceneText = (dt = 0.016) => {
     if (still) return;
-    cinemaY += (scrollY - cinemaY) * 0.12;
-    const height = innerHeight;
-    const bounds = sceneSections.map(section => ({ top: section.offsetTop, height: section.offsetHeight }));
+    cinemaY += (scrollY - cinemaY) * damp(7.5, dt);
+    const height = cachedInnerHeight || innerHeight;
+    const bounds = sectionBounds.length ? sectionBounds : sceneSections.map(section => ({ top: getPageTop(section), height: section.offsetHeight }));
 
     sceneSections.forEach((section, s) => {
-      const top = bounds[s].top - cinemaY;
-      const bottom = top + bounds[s].height;
+      const b = bounds[s] || { top: getPageTop(section), height: section.offsetHeight };
+      const top = b.top - cinemaY;
+      const bottom = top + b.height;
       sceneItems[s].forEach(({ el, index }) => {
         const entering = s === 0 ? 1 : cinemaEase((height * 0.90 - top - index * 12) / (height * 0.65));
         const exiting = cinemaEase((height * 0.40 - bottom + index * 8) / (height * 0.58));
@@ -902,8 +937,9 @@ window.__modelAssetsReady = (async () => {
 
     let wave = 0, drift = 0;
     for (let i = 1; i < sceneSections.length; i++) {
-      const start = bounds[i].top - height * 0.82;
-      const end = bounds[i].top - height * 0.05;
+      const b = bounds[i] || { top: getPageTop(sceneSections[i]) };
+      const start = b.top - height * 0.82;
+      const end = b.top - height * 0.05;
       const u = cinemaEase((cinemaY - start) / Math.max(1, end - start));
       const pulse = Math.sin(u * Math.PI);
       wave = Math.max(wave, pulse);
@@ -914,34 +950,39 @@ window.__modelAssetsReady = (async () => {
   };
 
   if (!still) {
-    const textLoop = () => { updateSceneText(); requestAnimationFrame(textLoop); };
-    textLoop();
     document.body.classList.add('cinema-ready');
   }
 
-  // Active Navbar Indicator on Scroll
+  // Active Navbar Indicator on Scroll (using absolute page coordinates)
   const navLinks = Array.from(document.querySelectorAll('nav a.nav-link'));
+  let lastActiveId = '';
   const updateNavActive = () => {
-    const scrollMid = scrollY + innerHeight * 0.35;
+    const scrollMid = scrollY + (cachedInnerHeight || innerHeight) * 0.35;
     let currentId = 'top';
     sceneSections.forEach(sec => {
-      if (sec && sec.offsetTop <= scrollMid) {
+      if (sec && getPageTop(sec) <= scrollMid) {
         currentId = sec.id;
       }
     });
-    // Check if within experience inside about
+    // Check if within experience inside about using absolute document offset
     const expEl = document.getElementById('experience');
-    if (expEl && expEl.offsetTop <= scrollMid && currentId === 'about') {
+    if (expEl && getPageTop(expEl) <= scrollMid && currentId === 'about') {
       currentId = 'experience';
     }
-    navLinks.forEach(link => {
-      const href = link.getAttribute('href').replace('#', '');
-      if (href === currentId) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
-    });
+    if (currentId !== lastActiveId) {
+      lastActiveId = currentId;
+      navLinks.forEach(link => {
+        const href = link.getAttribute('href').replace('#', '');
+        if (href === currentId) {
+          link.classList.add('active');
+          if ((cachedInnerWidth || innerWidth) < 768 && link.scrollIntoView) {
+            link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    }
   };
   window.addEventListener('scroll', updateNavActive, { passive: true });
   updateNavActive();
@@ -1449,6 +1490,55 @@ void main() {
 
   let sp = 0, mx = 0, my = 0, cx = 0, cy = 0, px = 9, py = 9, sx = 9, sy = 9;
 
+  // Query DOM model slots
+  const modelSlots = [
+    document.querySelector('#top .model-slot'),
+    document.querySelector('#about .model-slot'),
+    document.querySelector('#work .model-slot'),
+    document.querySelector('#skills .model-slot'),
+    document.querySelector('#education .model-slot'),
+    document.querySelector('#contact .model-slot')
+  ];
+
+  // Intrinsic model bounding radii for precision collision and scale fitting
+  const MODEL_RADII = [2.35, 2.75, 2.50, 2.70, 2.86];
+
+  // Geometry Cache Update (eliminates DOM layout reads during continuous render loop)
+  const updateGeometryCache = () => {
+    cachedInnerWidth = window.innerWidth;
+    cachedInnerHeight = window.innerHeight;
+    maxScroll = Math.max(1, document.documentElement.scrollHeight - cachedInnerHeight);
+
+    sectionBounds = sceneSections.map(s => ({
+      top: getPageTop(s),
+      height: s.offsetHeight
+    }));
+
+    sectionCenters = sectionBounds.map(b => {
+      return cl((b.top + b.height / 2 - cachedInnerHeight / 2) / maxScroll, 0, 1);
+    });
+
+    slotGeometry = modelSlots.map((slot, i) => {
+      if (!slot) {
+        return {
+          cx: cachedInnerWidth * 0.75,
+          cy: cachedInnerHeight * 0.5,
+          w: cachedInnerWidth * 0.4,
+          h: cachedInnerHeight * 0.65
+        };
+      }
+      const r = slot.getBoundingClientRect();
+      return {
+        cx: r.left + r.width / 2,
+        cy: r.top + r.height / 2,
+        w: r.width,
+        h: r.height,
+        left: r.left,
+        right: r.right
+      };
+    });
+  };
+
   // Viewport resize handling
   let visibleHeight = 7.4607, visibleWidth = 7.4607;
   const rs = () => {
@@ -1465,6 +1555,9 @@ void main() {
     const fovRad = (C.fov * Math.PI) / 180;
     visibleHeight = 2 * C.position.z * Math.tan(fovRad / 2);
     visibleWidth = visibleHeight * C.aspect;
+
+    updateGeometryCache();
+    updateNavActive();
   };
   addEventListener('resize', rs, { passive: true });
   rs();
@@ -1481,23 +1574,71 @@ void main() {
   window.addEventListener('pointerdown', e => { mv(e); UM.uB.value = 1; }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => { px = 9; py = 9; });
 
-  // Query DOM model slots
-  const modelSlots = [
-    document.querySelector('#top .model-slot'),
-    document.querySelector('#about .model-slot'),
-    document.querySelector('#work .model-slot'),
-    document.querySelector('#skills .model-slot'),
-    document.querySelector('#education .model-slot'),
-    document.querySelector('#contact .model-slot')
-  ];
+  // Mathematical Collision Guard: Unprojects model bounding sphere to screen space,
+  // verifies zero overlap with active text / card boundaries, and clamps safely to slot
+  const checkCollision = (centerWorld, targetScale, stageIdx, activeSecIdx) => {
+    const W = cachedInnerWidth || innerWidth;
+    const H = cachedInnerHeight || innerHeight;
+    const isDesktop = (W >= 1024 && C.aspect >= 1.02);
+    const radius = (MODEL_RADII[stageIdx] || 2.7) * targetScale;
 
-  // Intrinsic model bounding radii for precision collision and scale fitting
-  const MODEL_RADII = [2.35, 2.75, 2.50, 2.70, 2.86];
+    // Convert world center to screen pixels
+    const ndcX = centerWorld.x / (visibleWidth / 2);
+    const ndcY = centerWorld.y / (visibleHeight / 2);
+    let screenX = ((ndcX + 1) / 2) * W;
+    let screenY = ((1 - ndcY) / 2) * H;
 
-  // Rock-Solid Boundary Guard: Structural layout separation guarantees collision clearance
-  // without per-frame discrete jumps or scale snapping
-  const checkCollision = (centerWorld, currentScale, stageIdx, activeSection) => {
-    return { x: centerWorld.x, y: centerWorld.y, scale: currentScale };
+    // Model bounding radius in screen pixels
+    const radiusPx = (radius / visibleWidth) * W;
+    const pad = Math.max(16, W * 0.015);
+    const headerSafeBottom = 68;
+
+    // Retrieve active section content bounding box
+    const sec = sceneSections[activeSecIdx] || sceneSections[0];
+    const contentEl = sec ? (sec.querySelector('.section-content') || sec.querySelector('.work-intro')) : null;
+    let finalScale = targetScale;
+
+    if (contentEl) {
+      const cRect = contentEl.getBoundingClientRect();
+      if (isDesktop) {
+        // Desktop: Model sits in right slot, content on left
+        const minAllowedX = cRect.right + radiusPx + pad;
+        if (screenX < minAllowedX) {
+          const availableWidth = W - pad - (cRect.right + pad);
+          if (availableWidth >= radiusPx * 2) {
+            screenX = Math.min(W - radiusPx - pad, minAllowedX);
+          } else {
+            const maxRadiusPx = Math.max(60, (W - pad - (cRect.right + pad)) / 2);
+            finalScale = cl((maxRadiusPx / W) * visibleWidth / (MODEL_RADII[stageIdx] || 2.7), 0.38, targetScale);
+            screenX = cRect.right + pad + maxRadiusPx;
+          }
+        }
+      } else {
+        // Mobile: Model in top slot, content below
+        const maxAllowedY = cRect.top - radiusPx - pad;
+        if (screenY > maxAllowedY && maxAllowedY > headerSafeBottom + radiusPx) {
+          screenY = maxAllowedY;
+        } else if (screenY + radiusPx > cRect.top) {
+          const availableHeight = Math.max(120, cRect.top - (headerSafeBottom + pad * 2));
+          const maxRadiusPx = availableHeight / 2;
+          finalScale = cl((maxRadiusPx / H) * visibleHeight / (MODEL_RADII[stageIdx] || 2.7), 0.35, targetScale);
+          screenY = headerSafeBottom + pad + maxRadiusPx;
+        }
+      }
+    }
+
+    // Viewport edge containment guards
+    screenX = cl(screenX, radiusPx + pad, W - radiusPx - pad);
+    screenY = cl(screenY, headerSafeBottom + radiusPx + pad, H - radiusPx - pad);
+
+    // Unproject back to world coordinates
+    const resolvedNdcX = (screenX / W) * 2 - 1;
+    const resolvedNdcY = -((screenY / H) * 2 - 1);
+    return {
+      x: resolvedNdcX * (visibleWidth / 2),
+      y: resolvedNdcY * (visibleHeight / 2),
+      scale: finalScale
+    };
   };
 
   // WebGL Context Loss Recovery
@@ -1519,37 +1660,48 @@ void main() {
   const clk = new THREE.Clock();
   const tmp = V(0, 0, 0);
 
-  // Main Render Loop
+  // Main Render Loop (Unified text & 3D WebGL render pipeline)
   (function loop() {
     requestAnimationFrame(loop);
     if (!isPageVisible) return;
 
     const dt = Math.min(clk.getDelta(), 0.05) * k;
     const t = clk.elapsedTime * k;
-    const max = document.documentElement.scrollHeight - innerHeight;
+
+    // Single unified loop: update content reveal text with same delta time
+    updateSceneText(dt);
+
+    const max = maxScroll || Math.max(1, document.documentElement.scrollHeight - innerHeight);
     const p = max > 0 ? scrollY / max : 0;
 
-    // Smooth continuous exponential damping without discontinuity thresholds
-    sp += (p - sp) * 0.08;
-    cx += (mx - cx) * 0.08;
-    cy += (my - cy) * 0.08;
-    sx += (px - sx) * 0.2;
-    sy += (py - sy) * 0.2;
+    // Frame-rate independent exponential damping across all display refresh rates (30Hz - 144Hz)
+    sp += (p - sp) * damp(5.2, dt);
+    cx += (mx - cx) * damp(5.2, dt);
+    cy += (my - cy) * damp(5.2, dt);
+    sx += (px - sx) * damp(13.5, dt);
+    sy += (py - sy) * damp(13.5, dt);
 
-    const A = SECS.map(e => cl((e.offsetTop + e.offsetHeight / 2 - innerHeight / 2) / Math.max(1, max), 0, 1));
+    const A = sectionCenters.length === SECS.length ? sectionCenters : SECS.map(e => cl((getPageTop(e) + e.offsetHeight / 2 - innerHeight / 2) / Math.max(1, max), 0, 1));
     let sv = IDX[IDX.length - 1];
     let activeSecIdx = 0;
+    let j0 = 0, j1 = 0, tt = 0;
     for (let j = 0; j < IDX.length - 1; j++) {
       if (sp <= A[j + 1]) {
         const d = A[j + 1] - A[j];
-        const tt = d > 1e-4 ? cl((sp - A[j]) / d, 0, 1) : 1;
+        tt = d > 1e-4 ? cl((sp - A[j]) / d, 0, 1) : 1;
         sv = IDX[j] + (IDX[j + 1] - IDX[j]) * ss(cl((tt - 0.2) / 0.6, 0, 1));
         activeSecIdx = j;
+        j0 = j;
+        j1 = j + 1;
         break;
       }
     }
+    if (sp > A[A.length - 1]) {
+      j0 = j1 = A.length - 1;
+      activeSecIdx = A.length - 1;
+    }
 
-    Sm += (sv - Sm) * 0.10;
+    Sm += (sv - Sm) * damp(6.5, dt);
 
     // Morph stage calculation
     const k0 = Math.min(2, Math.floor(Sm));
@@ -1616,44 +1768,46 @@ void main() {
     G.rotation.y = (sp * TAU * 0.85 + cx * 0.38) * (1 - brainLock) * (1 - laptopLock);
     G.rotation.x = (0.06 + cy * 0.32) * (1 - brainLock) * (1 - laptopLock * 0.8);
 
-    // Responsive Model Placement & Framing System
-    const isDesktop = (innerWidth >= 1024 && C.aspect >= 1.02);
-    const wideFactor = cl((innerWidth - 768) / (1280 - 768), 0, 1) * cl((C.aspect - 0.72) / (1.25 - 0.72), 0, 1);
+    // Truly Adaptive 3D Model Positioning & Scaling via DOM Model-Slot Rectangles
+    const isDesktop = (cachedInnerWidth >= 1024 && C.aspect >= 1.02);
+    const geom0 = slotGeometry[j0] || { cx: cachedInnerWidth * 0.75, cy: cachedInnerHeight * 0.5, w: 300, h: 400 };
+    const geom1 = slotGeometry[j1] || geom0;
+    const blendT = ss(cl((tt - 0.15) / 0.70, 0, 1));
 
-    // Desktop: Dedicated right column (structural clearance guaranteed)
-    const deskRightCenter = (visibleWidth * 0.5) * 0.46; // ~3.05 on 1920x1080
-    const stageFinalOffset = UM.uW.value.w * 0.12;
-    const deskX = deskRightCenter - stageFinalOffset;
-    const deskY = 0.05;
+    const slotW = lerp(geom0.w, geom1.w, blendT);
+    const slotH = lerp(geom0.h, geom1.h, blendT);
+    const slotScreenX = lerp(geom0.cx, geom1.cx, blendT);
+    const slotScreenY = isDesktop ? (cachedInnerHeight * 0.5) : (cachedInnerHeight * 0.24);
 
-    // Mobile: Upper center visual viewport (top 38svh slot above text)
-    const mobX = 0.0;
-    const mobY = cl(visibleHeight * 0.24, 1.65, 1.95);
+    // Unproject DOM slot center to 3D world coordinates
+    const ndcX = (slotScreenX / cachedInnerWidth) * 2 - 1;
+    const ndcY = -((slotScreenY / cachedInnerHeight) * 2 - 1);
+    const rawTargetX = ndcX * (visibleWidth / 2);
+    const rawTargetY = ndcY * (visibleHeight / 2);
 
-    const targetWorldX = lerp(mobX, deskX, wideFactor);
-    const targetWorldY = lerp(mobY, deskY, wideFactor);
+    // Fit model scale to slot dimensions
+    const curModelRadius = lerp(MODEL_RADII[IDX[j0]], MODEL_RADII[IDX[j1]], blendT);
+    const slotWorldWidth = (slotW / cachedInnerWidth) * visibleWidth;
+    const slotWorldHeight = (slotH / cachedInnerHeight) * visibleHeight;
+    const fitScale = Math.min((slotWorldWidth * 0.84) / (curModelRadius * 2), (slotWorldHeight * 0.84) / (curModelRadius * 2));
+    const rawTargetScale = cl(fitScale, isDesktop ? 0.70 : 0.40, isDesktop ? 1.08 : 0.52);
 
-    // Responsive Scale System (continuous stage blending)
-    const maxRadius = 2.75;
-    const deskFitScale = ((visibleWidth * 0.5 * 0.84) / maxRadius);
-    const deskScale = cl(deskFitScale, 0.75, 1.05) * (1 - UM.uW.value.w * 0.05);
-    const mobFitScale = ((visibleWidth * 0.78) / (maxRadius * 2));
-    const mobScale = cl(mobFitScale, 0.40, 0.52);
-    const targetScale = lerp(mobScale, deskScale, wideFactor);
+    // Mathematical Collision Detection & Screen Boundary Guard
+    const collided = checkCollision({ x: rawTargetX, y: rawTargetY }, rawTargetScale, Math.round(Sm), activeSecIdx);
 
     const activeSection = SECS[activeSecIdx] || SECS[0];
 
-    // Continuous Exponential Damping on 3D Model Group (Zero jerking, zero snapping)
+    // Frame-rate independent exponential damping on 3D Model Group
     if (G.position.x === 0 && G.position.y === 0 && !G.__initPos) {
-      G.position.set(targetWorldX, targetWorldY, 0);
-      G.scale.setScalar(targetScale);
+      G.position.set(collided.x, collided.y, 0);
+      G.scale.setScalar(collided.scale);
       G.__initPos = true;
     } else {
-      G.position.x += (targetWorldX - G.position.x) * 0.14;
-      G.position.y += (targetWorldY - G.position.y) * 0.14;
+      G.position.x += (collided.x - G.position.x) * damp(8.8, dt);
+      G.position.y += (collided.y - G.position.y) * damp(8.8, dt);
       G.position.z = 0;
-      const currentScale = G.scale.x || targetScale;
-      G.scale.setScalar(currentScale + (targetScale - currentScale) * 0.14);
+      const currentScale = G.scale.x || collided.scale;
+      G.scale.setScalar(currentScale + (collided.scale - currentScale) * damp(8.8, dt));
     }
 
     G.updateMatrixWorld(true);

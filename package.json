@@ -1,0 +1,23 @@
+{
+  "name": "ai-engineer-portfolio",
+  "version": "1.0.0",
+  "description": "Production-Grade Cinematic 3D AI Engineer Portfolio for Udhaya Adhithya Varman",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8080",
+    "start": "python -m http.server 8080",
+    "build": "python src/build/build.py",
+    "preview": "python -m http.server 8080 --directory ."
+  },
+  "keywords": [
+    "threejs",
+    "webgl",
+    "portfolio",
+    "ai-engineer",
+    "interactive-3d",
+    "particles",
+    "generative-ai"
+  ],
+  "author": "Udhaya Adhithya Varman",
+  "license": "MIT"
+}

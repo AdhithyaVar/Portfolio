@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Portfolio of Udhaya Adhithya Varman — AI Engineer specializing in end-to-end GenAI systems, hybrid RAG, multi-agent pipelines, and real-time edge computer vision.">
+<title>Udhaya Adhithya Varman | AI Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<header>
+  <b>UAV</b>
+  <nav class="glass" aria-label="Main Navigation">
+    <a href="#about" class="nav-link">About</a>
+    <a href="#experience" class="nav-link">Experience</a>
+    <a href="#work" class="nav-link">Projects</a>
+    <a href="#skills" class="nav-link">Skills</a>
+    <a href="#education" class="nav-link">Education</a>
+    <a href="#contact" class="nav-link">Contact</a>
+  </nav>
+</header>
+
+<main>
+<section id="top">
+    <div class="section-grid hero-grid">
+      <div class="section-content">
+        <p class="eyebrow in">AI ENGINEER / GENERATIVE AI</p>
+        <h1 class="in">Udhaya Adhithya<br>Varman</h1>
+        <p class="in">AI Engineer and CSE (AI) graduate building end-to-end GenAI systems: hybrid RAG with hallucination checks, multi-agent research pipelines, and real-time edge-deployed ML.</p>
+        <div class="in hero-actions">
+          <a class="btn glass" href="#work">Explore Projects</a>
+          <a class="btn glass" href="#contact">Get in Touch</a>
+        </div>
+      </div>
+      <div class="model-slot" data-slot="0" aria-hidden="true"></div>
+    </div>
+  </section>
+<section id="about">
+    <div class="section-grid about-grid">
+      <div class="section-content">
+        <p class="eyebrow">01 / BACKGROUND</p>
+        <h2>About Me</h2>
+        <p>I'm a Computer Science and Engineering (Artificial Intelligence) graduate with a focus on building practical AI applications. My work spans retrieval-augmented generation, multi-agent research workflows, and real-time computer vision deployed at the edge.</p>
+        <p>I enjoy turning machine-learning ideas into end-to-end systems—from retrieving relevant knowledge and checking claims to building usable interfaces and optimizing inference speed.</p>
+        <div id="experience">
+          <p class="eyebrow">02 / PROFESSIONAL EXPERIENCE</p>
+          <h2>Experience</h2>
+          <div class="experience-card">
+            <div class="experience-meta">
+              <h3>AI Engineer Intern</h3>
+              <span class="experience-date">23 Jul 2026 – Present</span>
+            </div>
+            <p class="experience-company">Unizen Technologies · Bengaluru, India</p>
+            <ul class="experience-details">
+              <li>Contributing to live projects across artificial intelligence, machine learning, and embedded systems.</li>
+              <li>Applying technical skills to real-world engineering tasks while collaborating with experienced professionals.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="model-slot" data-slot="1" aria-hidden="true"></div>
+    </div>
+  </section>
+<section id="work">
+    <div class="work-header-wrap">
+      <div class="work-intro">
+        <p class="eyebrow">03 / SELECTED WORK</p>
+        <h2>Projects</h2>
+        <p>Featured AI systems spanning hybrid dense-sparse retrieval, multi-agent collaborative workflows, and edge neural architectures.</p>
+      </div>
+      <div class="model-slot work-model-slot" data-slot="2" aria-hidden="true"></div>
+    </div>
+    <div class="work">
+      <article class="card">
+        <h3>Domain-Specific AI Research Assistant with Knowledge Graph</h3>
+        <p>A research assistant that ingests academic PDFs and answers questions using hybrid RAG. Combines ChromaDB dense retrieval with BM25 sparse retrieval through Reciprocal Rank Fusion, checks generated claims using an NLI cross-encoder, and builds an interactive multi-paper knowledge graph across models, datasets, and metrics.</p>
+        <ul class="tags">
+          <li>Ollama</li><li>Hybrid RAG</li><li>ChromaDB</li><li>BM25</li><li>Streamlit</li>
+        </ul>
+        <a class="btn sm glass" href="https://github.com/AdhithyaVar/Domain-Specific-AI-Research-Assistant-with-Knowledge-Graph" target="_blank" rel="noopener noreferrer" aria-label="View project 1 source code on GitHub">View Project on GitHub</a>
+      </article>
+      <article class="card">
+        <h3>Multi-Agent AI Research Assistant</h3>
+        <p>Five specialized agents—Manager, Searcher, Summarizer, Critic, and Writer—automate academic research using Semantic Scholar. The pipeline ranks papers by relevance, citation impact, and recency, then generates structured literature reviews with gap analysis and citation validation.</p>
+        <ul class="tags">
+          <li>LLaMA 3.3-70B</li><li>Groq</li><li>ChromaDB</li><li>Semantic Scholar</li><li>FastAPI</li><li>Streamlit</li>
+        </ul>
+        <a class="btn sm glass" href="https://github.com/AdhithyaVar/Multi-Agent-AI-Research-Assistant" target="_blank" rel="noopener noreferrer" aria-label="View project 2 source code on GitHub">View Project on GitHub</a>
+      </article>
+      <article class="card">
+        <h3>SignBridge — Real-Time ISL Translator with Edge Deployment</h3>
+        <p>Indian Sign Language recognition system for all 26 ISL alphabet signs. Uses a sliding 30-frame CNN–LSTM model with multi-head attention and MediaPipe hand landmarks. Reports 99.74% validation accuracy, 22-minute CPU training, and 353 FPS with ONNX FP32 deployment.</p>
+        <ul class="tags">
+          <li>MediaPipe</li><li>CNN–LSTM</li><li>ONNX</li><li>OpenCV</li><li>pyttsx3</li>
+        </ul>
+        <a class="btn sm glass" href="https://github.com/AdhithyaVar/SignBridge-Real-Time-ISL-Translator-with-Edge-Deployment" target="_blank" rel="noopener noreferrer" aria-label="View project 3 source code on GitHub">View Project on GitHub</a>
+      </article>
+    </div>
+  </section>
+<section id="skills">
+    <div class="section-grid skills-grid">
+      <div class="section-content">
+        <p class="eyebrow">04 / EXPERTISE &amp; BACKGROUND</p>
+        <h2>Skills</h2>
+        <dl class="skills">
+          <dt>Languages &amp; Tools</dt>
+          <dd>Python, SQL, Streamlit</dd>
+          <dt>AI &amp; Machine Learning</dt>
+          <dd>Artificial Intelligence, Machine Learning, NLP, Deep Learning, LangGraph, Data Analysis</dd>
+          <dt>Generative AI Projects</dt>
+          <dd>Hybrid RAG, BM25, ChromaDB, NLI-based hallucination checking, multi-agent research systems</dd>
+          <dt>Computer Vision</dt>
+          <dd>MediaPipe, CNN–LSTM, ONNX, OpenCV</dd>
+          <dt>Cloud &amp; MLOps</dt>
+          <dd>MLflow, Docker, GitHub Actions</dd>
+        </dl>
+      </div>
+      <div class="model-slot" data-slot="2" aria-hidden="true"></div>
+    </div>
+  </section>
+<section id="education">
+    <div class="section-grid education-grid">
+      <div class="section-content">
+        <p class="eyebrow">05 / EDUCATION &amp; CERTIFICATIONS</p>
+        <h2>Education</h2>
+        <div class="background-grid">
+          <div class="background-block">
+            <h3>Academic Background</h3>
+            <p class="subtle-meta">Aug 2022 – Jul 2026</p>
+            <p><strong>Sathyabama Institute of Science and Technology of Engineering</strong></p>
+            <p>Bachelor of Computer Science Engineering (CSE) – AI</p>
+            <p>CGPA: 8.0</p>
+          </div>
+          <div class="background-block" id="certifications">
+            <h3>Certifications</h3>
+            <ul class="cert-list">
+              <li>Certification in Artificial Intelligence</li>
+              <li>Certification in Deep Learning Fundamental</li>
+              <li>Certification in Machine Learning</li>
+              <li>Certification in Prompt Engineering for Everyone</li>
+              <li>Certification in Python for Database</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="model-slot" data-slot="3" aria-hidden="true"></div>
+    </div>
+  </section>
+<section id="contact">
+    <div class="section-grid contact-grid">
+      <div class="section-content">
+        <p class="eyebrow">06 / CONTACT</p>
+        <h2>Let's build something</h2>
+        <p>Interested in collaborating or discussing an AI engineering opportunity? Reach out by email or connect with me online.</p>
+        <a class="mail" href="mailto:udhayaadhithyavarman@gmail.com">udhayaadhithyavarman@gmail.com</a>
+        <p class="contact-phone"><a href="tel:+919483215500">+91 9483215500</a> <span aria-hidden="true">·</span> India</p>
+        <div class="links">
+          <a class="btn sm glass" href="https://github.com/AdhithyaVar" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a class="btn sm glass" href="https://www.linkedin.com/in/udhayaadhithyavarman" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a class="btn sm glass" href="Udhaya_Adhithya_Varman_Resume.pdf" download="Udhaya_Adhithya_Varman_Resume.pdf" title="Download resume PDF">Resume (PDF)</a>
+        </div>
+      </div>
+      <div class="model-slot" data-slot="4" aria-hidden="true"></div>
+    </div>
+  </section>
+</main>
+
+<footer>© 2026 Udhaya Adhithya Varman · AI Engineer</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="assets/js/geometry-data.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

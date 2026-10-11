@@ -1,0 +1,22 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node / Package managers
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Logs & temp files
+*.log
+.tempmediaStorage/
+scratch/
+.cache/
+
+# IDE configurations
+.vscode/
+.idea/
+*.suo
+*.user

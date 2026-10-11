@@ -257,49 +257,87 @@
       { x: -2.65, y: -0.64, z: 0.98, w: 0.92, h: 0.62, k: 'wave' }
     ];
 
-    // Model 4: Desktop Monitor
+    // Model 4: TRUE 3D Particle Desktop Monitor from Reference Preview
+    // Volumetric three-quarter view, recessed display, solid-depth pedestal/base and extruded floating app cards
     const monitor = () => {
-      const quad = (A, B, C, D, t, u) => [
-        A[0] * (1 - t) * (1 - u) + B[0] * t * (1 - u) + C[0] * t * u + D[0] * (1 - t) * u,
-        A[1] * (1 - t) * (1 - u) + B[1] * t * (1 - u) + C[1] * t * u + D[1] * (1 - t) * u,
-        A[2] * (1 - t) * (1 - u) + B[2] * t * (1 - u) + C[2] * t * u + D[2] * (1 - t) * u
+      const w = 4.92, h = 2.38, cy = 0.25;
+      const frontZ = -0.66, rearZ = -1.56;
+      // Deterministic fixed pose (not an animation). Right-hand monitor side is visible.
+      const yaw = -0.32, cosA = Math.cos(yaw), sinA = Math.sin(yaw);
+      const pose = q => [
+        (q[0] * cosA + q[2] * sinA) * 0.91,
+        (q[1] - 0.12) * 0.91,
+        (-q[0] * sinA + q[2] * cosA) * 0.91
       ];
-      const pick = rn(); let p;
-      const A = [-2.48, 1.30, -1.02], B = [2.48, 1.30, -1.02], C = [2.48, -0.72, -1.02], D = [-2.48, -0.72, -1.02];
-      if (pick < 0.40) {
-        const t = rn(), u = rn(), e = rn();
-        if (e < 0.25) p = quad(A, B, C, D, 0, u);
-        else if (e < 0.5) p = quad(A, B, C, D, 1, u);
-        else if (e < 0.75) p = quad(A, B, C, D, t, 0);
-        else p = quad(A, B, C, D, t, 1);
-      } else if (pick < 0.52) {
-        const t = rn(), u = rn();
-        p = quad(A, B, C, D, t, u);
-        p = [p[0] * 0.965, p[1] * 0.965, p[2]];
-      } else if (pick < 0.63) {
-        const e = edge2(0.86, 1.12);
-        p = [e[0] * 0.94, -1.18 + e[1], -0.08 + (rn() - 0.5) * 0.02];
-      } else if (pick < 0.69) {
-        const e = edge2(1.36, 0.16);
-        p = [e[0], -1.86 + e[1], 0.04 + (rn() - 0.5) * 0.015];
-      } else if (pick < 0.74) {
-        const e = edge2(0.92, 0.07);
-        p = [e[0], -1.93 + e[1], 0.08 + (rn() - 0.5) * 0.01];
-      } else if (pick < 0.988) {
+      const rectPoint = (width, height, cY, z) => {
+        const p = edge2(width, height);
+        return [p[0], p[1] + cY, z];
+      };
+      const boxPoint = (x0, x1, y0, y1, z0, z1) => {
+        // Sample visible faces and edges, keeping particle silhouettes legible.
+        const side = rn();
+        let x = x0 + rn() * (x1 - x0);
+        let y = y0 + rn() * (y1 - y0);
+        let z = z0 + rn() * (z1 - z0);
+        if (side < 0.27) z = z1;
+        else if (side < 0.52) z = z0;
+        else if (side < 0.64) x = x0;
+        else if (side < 0.82) x = x1;
+        else if (side < 0.91) y = y0;
+        else y = y1;
+        return [x, y, z];
+      };
+      const pick = rn();
+      let p;
+      if (pick < 0.255) {
+        // Outer frame/bezel front: 3D monitor silhouette.
+        p = rectPoint(w, h, cy, frontZ);
+        p[2] += R2() * 0.024;
+      } else if (pick < 0.332) {
+        // Inset rim around a slightly recessed display.
+        p = rectPoint(w - 0.14, h - 0.14, cy, frontZ + 0.035);
+      } else if (pick < 0.410) {
+        // Sparse monitor panel particles, retaining the black-screen reference.
+        p = [(rn() - 0.5) * (w - 0.26), cy + (rn() - 0.5) * (h - 0.26), frontZ + 0.042];
+      } else if (pick < 0.500) {
+        // Back shell surface, physically separated from the front panel.
+        if (rn() < 0.65) p = rectPoint(w - 0.08, h - 0.08, cy, rearZ);
+        else p = [(rn() - 0.5) * w, cy + (rn() - 0.5) * h, rearZ];
+      } else if (pick < 0.575) {
+        // Depth of the top, bottom and left/right side walls.
+        const q = rectPoint(w, h, cy, frontZ);
+        p = [q[0], q[1], rearZ + rn() * (frontZ - rearZ)];
+      } else if (pick < 0.697) {
+        // Real 3D support column (front/back and visible side faces).
+        p = boxPoint(-0.42, 0.42, -2.14, -0.88, -1.19, -0.40);
+      } else if (pick < 0.756) {
+        // Solid dimensional foot of the display.
+        p = boxPoint(-0.96, 0.96, -2.26, -2.10, -1.08, 0.08);
+      } else if (pick < 0.994) {
+        // Existing application icons retained, with visible card thickness.
         const c = cards[Math.floor(rn() * cards.length)];
-        if (rn() < 0.30) {
+        const coin = rn();
+        if (coin < 0.35) {
           const e = edge2(c.w, c.h);
-          p = [c.x + e[0], c.y + e[1], c.z + (rn() - 0.5) * 0.025];
+          p = [c.x + e[0], c.y + e[1], c.z + 0.09];
+        } else if (coin < 0.55) {
+          const e = edge2(c.w, c.h);
+          p = [c.x + e[0], c.y + e[1], c.z - 0.17];
+        } else if (coin < 0.66) {
+          const e = edge2(c.w, c.h);
+          p = [c.x + e[0], c.y + e[1], c.z - 0.17 + rn() * 0.26];
         } else {
-          const g = ico(c.k);
-          const sx = Math.max(0.28, c.w * 0.48), sy = Math.max(0.28, c.h * 0.48);
-          p = [c.x + g[0] * sx, c.y + g[1] * sy, c.z + (rn() - 0.5) * 0.02];
+          const e = ico(c.k);
+          p = [c.x + e[0] * Math.max(0.30, c.w * 0.52),
+               c.y + e[1] * Math.max(0.30, c.h * 0.52),
+               c.z + 0.12 + R2() * 0.025];
         }
       } else {
+        // Cable sweep behind the base, shown only as a very subtle detail.
         const t = rn();
-        p = [-4.05 + t * 1.9, -1.78 + Math.sin(t * Math.PI) * 0.08, 0.07 + (rn() - 0.5) * 0.008];
+        p = [-3.30 + t * 2.4, -2.23 + Math.sin(t * Math.PI) * 0.06, -1.08];
       }
-      return [p[0] * 0.93, (p[1] - 0.06) * 0.98, p[2] * 0.92];
+      return pose(p);
     };
 
     // Model 5: Keyboard

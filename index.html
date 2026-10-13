@@ -140,6 +140,9 @@ section {
   position: relative;
   z-index: 3;
 }
+#top .section-content {
+  max-width: clamp(32rem, 50vw, 56rem);
+}
 .model-slot {
   width: 100%;
   min-height: clamp(380px, 68svh, 620px);
@@ -151,11 +154,21 @@ section {
 }
 
 h1 {
-  font: 500 clamp(3.2rem, 7.5vw, 7.2rem)/0.92 var(--serif);
-  letter-spacing: -0.03em;
+  font: 500 clamp(2.05rem, 4.4vw, 4.6rem)/1.04 var(--serif);
+  letter-spacing: -0.02em;
   margin: 0 0 1.3rem;
-  max-width: 14ch;
+  max-width: 100%;
   text-shadow: 0 0 35px rgba(0, 0, 0, 0.85);
+}
+.hero-name-first,
+.hero-name-last {
+  display: inline-block;
+  white-space: nowrap;
+}
+@media (min-width: 1024px) {
+  #top h1 {
+    white-space: nowrap;
+  }
 }
 h2 {
   font: 500 clamp(2.2rem, 4.6vw, 3.8rem)/1.06 var(--serif);
@@ -626,7 +639,7 @@ body.cinema-ready .scene-animated {
     font-size: 0.73rem;
   }
   h1 {
-    font-size: clamp(2.4rem, 11vw, 3.4rem);
+    font-size: clamp(1.85rem, 8.5vw, 2.5rem);
   }
   .btn {
     width: 100%;
@@ -680,7 +693,7 @@ body.cinema-ready .scene-animated {
     <div class="section-grid hero-grid">
       <div class="section-content">
         <p class="eyebrow in">AI ENGINEER / GENERATIVE AI</p>
-        <h1 class="in">Udhaya Adhithya<br>Varman</h1>
+        <h1 class="in"><span class="hero-name-first">Udhaya Adhithya</span> <span class="hero-name-last">Varman</span></h1>
         <p class="in">AI Engineer and CSE (AI) graduate building end-to-end GenAI systems: hybrid RAG with hallucination checks, multi-agent research pipelines, and real-time edge-deployed ML.</p>
         <div class="in hero-actions">
           <a class="btn glass" href="#work">Explore Projects</a>

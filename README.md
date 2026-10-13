@@ -10,11 +10,25 @@ The project is structured according to production web standards with clean separ
 
 ```
 portfolio/
-├── index.html                           # Self-contained, zero-dependency production file (deploy-ready)
+├── index.html                           # Self-contained, zero-dependency production bundle (deploy-ready)
 ├── modular.html                         # Modular development entry point (loads separate CSS & JS)
+├── favicon.svg                          # High-resolution vector icon with futuristic neural/UAV motif
+├── favicon.ico                          # Multi-resolution ICO icon for browser compatibility
+├── .nojekyll                            # Instructs GitHub Pages to serve static files directly without Jekyll
+├── LICENSE                              # Official MIT open-source software license
+├── LICENSES.txt                         # Third-party license attributions (Three.js, fflate, fonts)
+├── robots.txt                           # Web crawler instructions & sitemap locator
+├── sitemap.xml                          # Canonical XML search engine sitemap
+├── _headers                             # Security response headers (Content-Type, Referrer, Permissions)
 ├── package.json                         # npm script definitions for development and builds
 ├── README.md                            # Comprehensive project guide and deployment handbook
 ├── .gitignore                           # Git ignore rules for clean repository management
+├── Udhaya_Adhithya_Varman_Resume.pdf    # Official AI Engineer resume PDF
+├── Adhithya.pdf                         # Resume PDF (root alias matching source submission)
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml                   # Automated GitHub Actions workflow for zero-config Pages deployment
 │
 ├── index/                               # Modular HTML partials & section components
 │   ├── header.html                      # Navigation bar with responsive glassmorphism pill design
@@ -42,9 +56,12 @@ portfolio/
 │   │   ├── app.js                       # Application script
 │   │   └── geometry-data.js             # Geometry data
 │   ├── docs/
-│   │   └── Udhaya_Adhithya_Varman_Resume.pdf # Official AI Engineer resume PDF
-│   └── models/
-│       └── README.md                    # Technical documentation for the 5 3D models
+│   │   ├── Udhaya_Adhithya_Varman_Resume.pdf # Official AI Engineer resume PDF
+│   │   └── Adhithya.pdf                 # Alternate resume filename
+│   ├── models/
+│   │   └── README.md                    # Technical documentation for the 5 3D models
+│   ├── favicon.svg                      # Asset favicon SVG
+│   └── favicon.ico                      # Asset favicon ICO
 │
 └── assest/                              # Convenience mirror of assets/ (handles common naming patterns)
     ├── css/

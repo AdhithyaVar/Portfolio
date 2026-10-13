@@ -51,6 +51,9 @@ def build():
 <meta name="theme-color" content="#000000">
 <meta name="description" content="Portfolio of Udhaya Adhithya Varman — AI Engineer specializing in end-to-end GenAI systems, hybrid RAG, multi-agent pipelines, and real-time edge computer vision.">
 <title>Udhaya Adhithya Varman | AI Engineer</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="canonical" href="https://adhithyavar.github.io/portfolio/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">

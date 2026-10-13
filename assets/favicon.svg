@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#040407"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <line x1="16" y1="20" x2="32" y2="12" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+  <line x1="32" y1="12" x2="48" y2="20" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+  <line x1="16" y1="20" x2="20" y2="44" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+  <line x1="48" y1="20" x2="44" y2="44" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+  <line x1="20" y1="44" x2="32" y2="52" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+  <line x1="44" y1="44" x2="32" y2="52" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+  <line x1="20" y1="44" x2="44" y2="44" stroke="rgba(129,140,248,0.25)" stroke-width="1"/>
+  <path d="M 22 22 L 22 36 C 22 41 26 43 32 43 C 38 43 42 41 42 36 L 42 22" fill="none" stroke="url(#cyanGrad)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <path d="M 26 48 L 32 30 L 38 48" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="12" r="2.2" fill="#38bdf8"/>
+  <circle cx="16" cy="20" r="2" fill="#818cf8"/>
+  <circle cx="48" cy="20" r="2" fill="#818cf8"/>
+  <circle cx="32" cy="30" r="2" fill="#38bdf8"/>
+  <circle cx="32" cy="52" r="2.2" fill="#38bdf8"/>
+</svg>
